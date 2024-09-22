@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #c4d4ec;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #dcd5d5;
+            padding: 20px;
+            width: 900px;
+            height: 250px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            margin-top: 0;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .button-container a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container a:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .button-container a:active {
+            background-color: #004494;
+            transform: translateY(0);
+        }
+
+        .button-container a.position {
+            background-color: #28a745;
+        }
+
+        .button-container a.position:hover {
+            background-color: #218838;
+        }
+
+        .button-container a.position:active {
+            background-color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="margin-top: 30px;">Turnover, Positions & Upload Files for : {{ group_name }}</h1>
+        <div class="button-container">
+            <a href="{{ url_for('turnover') }}">Turn Over</a>
+            <a href="{{ url_for('clearing') }}">Clearing</a>
+            <a href="{{ url_for('position') }}">Positions</a>
+            <a href="{{ url_for('upload') }}">Upload Files</a>
+            <a href="{{ url_for('position1') }}">Symbol wise</a>
+        </div>
+        <div class="button-container" style="margin-top: 40px;">
+            <a href="{{ url_for('index') }}" class="position">Back to Login</a>
+        </div>
+    </div>
+</body>
+</html>

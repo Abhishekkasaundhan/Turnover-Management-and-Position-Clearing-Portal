@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clearing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e4d9d9;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 1500px;
+            margin-top: 5px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        .table-wrapper {
+            max-height: 733px; /* Adjust this value as needed */
+            overflow-y: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        thead th, tfoot td {
+            position: sticky;
+            z-index: 2; /* Ensures the header and footer are above the body rows */
+            background: #f2f2f2;
+        }
+
+        thead th {
+            top: 0; /* Fix the header at the top */
+        }
+
+        tfoot td {
+            bottom: 0; /* Fix the footer at the bottom */
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .button-container a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container a:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .red-column {
+            color: red;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .search-container input[type="text"] {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+            box-sizing: border-box;
+        }
+
+        .search-container button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        function searchTable(inputId, tableId) 
+        {
+    const input = document.getElementById(inputId).value;
+    const searchTerms = input.toUpperCase().split('&').map(term => term.trim());
+    const table = document.getElementById(tableId);
+    const tbody = table.getElementsByTagName('tbody')[0];
+    const tr = tbody.getElementsByTagName('tr');
+
+    function normalize(value) {
+        return value.replace(/[^\dA-Z\-]/g, ''); // Remove all non-alphanumeric characters except hyphens
+    }
+
+    for (let i = 0; i < tr.length; i++) {
+        let row = tr[i];
+        let cells = row.getElementsByTagName('td');
+        let match = true;
+
+        for (let term of searchTerms) {
+            let found = false;
+            let normalizedTerm = normalize(term);
+            for (let j = 0; j < cells.length; j++) {
+                let cell = cells[j];
+                if (cell) {
+                    let txtValue = cell.textContent || cell.innerText;
+                    let normalizedValue = normalize(txtValue.toUpperCase());
+                    if (normalizedValue.indexOf(normalizedTerm) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                match = false;
+                break;
+            }
+        }
+
+        // Check for zero Net Quantity
+        let quantityCell = row.getElementsByTagName('td')[4]; // Assuming Net Quantity is in the 5th column (index 4)
+        if (quantityCell) {
+            let quantityValue = parseFloat(quantityCell.textContent.replace(/,/g, ''));
+            if (quantityValue === 0) {
+                match = false; // Hide the row if Net Quantity is zero
+            }
+        }
+
+        row.style.display = match ? '' : 'none';
+    }
+    }
+
+
+        function hideZeroQuantityRows(tableId) {
+            const table = document.getElementById(tableId);
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const tr = tbody.getElementsByTagName('tr');
+
+            for (let i = 0; i < tr.length; i++) {
+                let row = tr[i];
+                let quantityCell = row.getElementsByTagName('td')[4]; 
+                if (quantityCell) {
+                    let quantityValue = parseFloat(quantityCell.textContent.replace(/,/g, ''));
+                    if (quantityValue === 0) {
+                        row.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        window.onload = function() {
+            hideZeroQuantityRows('position-table');
+        }
+
+        function downloadTableAsExcel() {
+    // Get the table element
+    const table = document.getElementById('position-table');
+
+    // Get all rows and filter out the hidden ones
+    const rows = table.querySelectorAll('tbody tr');
+    let filteredRows = Array.from(rows).filter(row => row.style.display !== 'none');
+
+    // Clone the table to create a new table for export
+    const exportTable = document.createElement('table');
+    const exportTbody = document.createElement('tbody');
+
+    // Append visible rows to the export table
+    filteredRows.forEach(row => {
+        exportTbody.appendChild(row.cloneNode(true));
+    });
+
+    exportTable.appendChild(table.querySelector('thead').cloneNode(true)); // Add header
+    exportTable.appendChild(exportTbody); // Add filtered rows
+
+    // Convert the cloned table to a workbook
+    const wb = XLSX.utils.table_to_book(exportTable, { sheet: "Sheet1" });
+
+    // Generate Excel file
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }));
+    link.download = '{{ current_user.id }}_clearing.xlsx'; // Use the current user's ID for the filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>Clearing for Group: {{ group_name }}</h1>
+        <div class="search-container">
+            <input type="text" id="position-search" onkeyup="searchTable('position-search', 'position-table')" placeholder="Search Position Data...">
+            <button onclick="searchTable('position-search', 'position-table')">Search</button>
+            <p style="color: #979292; margin-left: 30px; font-size: 15px;"><em>Note: Use "&" symbol for multiple search</em></p>
+
+            <button onclick="downloadTableAsExcel()" style="margin-left: 40px;">Download Excel File</button>
+        </div>
+        <div class="table-wrapper">
+            <table id="position-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Expiry</th>
+                        <th>Strike</th>
+                        <th>Option Type</th>
+                        <th>Net Quantity</th>
+                        <th>Buy Quantity</th>
+                        <th>Sell Quantity</th>
+                        <th>Clearing Price</th>
+                        <th>Buy Value</th>
+                        <th>Sell Value</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in position_data.itertuples() %}
+                    <tr>
+                        <td>{{ row.Symbol }}</td>
+                        <td>{{ row.Expiry }}</td>
+                        <td>
+                            {% if row.Strike is number %}
+                              {{ '{:,.2f}'.format(row.Strike) if row.Strike % 1 else '{:,.0f}'.format(row.Strike) }}
+                            {% else %}
+                              {{ row.Strike }}
+                            {% endif %}
+                        </td>
+                        <td>{{ row._4 }}</td> 
+                        <td>{{ '{:,.2f}'.format(row._5) if row._5 % 1 else '{:,.0f}'.format(row._5) }}</td>
+                        <td>{{ '{:,.2f}'.format(row._6) if row._6 % 1 else '{:,.0f}'.format(row._6) }}</td>
+                        <td>{{ '{:,.2f}'.format(row._7) if row._7 % 1 else '{:,.0f}'.format(row._7) }}</td>
+                        <td>{{  '0' }}</td>
+                        <td>{{  '0' }}</td>
+                        <td>{{ '0' }}</td>
+     
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="button-container">
+            <a href="{{ url_for('data', group_name=current_user.id) }}">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

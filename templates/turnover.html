@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Turn Over</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e4d9d9;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 1500px;
+            margin-top: 5px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            margin-top: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .table-wrapper {
+            max-height: 733px; /* Adjust this value as needed */
+            overflow-y: auto;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        table th {
+            background-color: #f2f2f2;
+        }
+
+        thead th + th {
+            border-left: none;
+        }
+
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .button-container a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container a:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .red-column {
+            color: red;
+        }
+
+        .search-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .search-container input[type="text"] {
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 200px;
+            box-sizing: border-box;
+        }
+
+        .search-container button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-container button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script>
+        function searchTable(inputId, tableId) {
+            const input = document.getElementById(inputId).value;
+            const searchTerms = input.toUpperCase().split('&').map(term => term.trim());
+            const table = document.getElementById(tableId);
+            const tbody = table.getElementsByTagName('tbody')[0];
+            const tr = tbody.getElementsByTagName('tr');
+
+            function normalize(value) {
+                return value.replace(/[^\dA-Z\-]/g, ''); // Remove all non-alphanumeric characters
+            }
+
+            for (let i = 0; i < tr.length; i++) {
+                let row = tr[i];
+                let cells = row.getElementsByTagName('td');
+                let match = true;
+
+                for (let term of searchTerms) {
+                    let found = false;
+                    let normalizedTerm = normalize(term);
+                    for (let j = 0; j < cells.length; j++) {
+                        let cell = cells[j];
+                        if (cell) {
+                            let txtValue = cell.textContent || cell.innerText;
+                            let normalizedValue = normalize(txtValue.toUpperCase());
+                            if (normalizedValue.indexOf(normalizedTerm) > -1) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!found) {
+                        match = false;
+                        break;
+                    }
+                }
+
+                row.style.display = match ? '' : 'none';
+            }
+        }
+
+        function downloadTableAsExcel() {
+    // Get the table element
+    const table = document.getElementById('turnover-table');
+
+    // Get all rows and filter out the hidden ones
+    const rows = table.querySelectorAll('tbody tr');
+    let filteredRows = Array.from(rows).filter(row => row.style.display !== 'none');
+
+    // Clone the table to create a new table for export
+    const exportTable = document.createElement('table');
+    const exportTbody = document.createElement('tbody');
+
+    // Append visible rows to the export table
+    filteredRows.forEach(row => {
+        exportTbody.appendChild(row.cloneNode(true));
+    });
+
+    exportTable.appendChild(table.querySelector('thead').cloneNode(true)); // Add header
+    exportTable.appendChild(exportTbody); // Add filtered rows
+
+    // Convert the cloned table to a workbook
+    const wb = XLSX.utils.table_to_book(exportTable, { sheet: "Sheet1" });
+
+    // Generate Excel file
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/octet-stream' }));
+    link.download = '{{ current_user.id }}_turnover.xlsx'; // Use the current user's ID for the filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+    
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.4/xlsx.full.min.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <h1>Turn Over Data for Group: {{ group_name }}</h1>
+        <div class="search-container">
+            <input type="text" id="turnover-search" onkeyup="searchTable('turnover-search', 'turnover-table')" placeholder="Search Turn Over Data...">
+            <button onclick="searchTable('turnover-search', 'turnover-table')">Search</button>
+            <p style="color: #979292; margin-left: 30px; font-size: 15px;"><em>Note: Use "&" symbol for multiple search</em></p>
+
+            <button onclick="downloadTableAsExcel()" style="margin-left: 40px;">Download Excel File</button>
+        </div>
+        <div class="table-wrapper">
+            <table id="turnover-table">
+                <thead style="position: sticky; top: 0; background: white; z-index: 2;">
+                    <tr class="red-column" style="position: sticky; top: 0; background: white; z-index: 1;">
+                        <th>Total</th>
+                        <th>{{ '{:,.2f}'.format(total_EQ_buy_value) if total_EQ_buy_value % 1 else '{:,.0f}'.format(total_EQ_buy_value) }}</th>
+                        <th>{{ '{:,.2f}'.format(total_EQ_sell_value) if total_EQ_sell_value % 1 else '{:,.0f}'.format(total_EQ_sell_value) }}</th>
+
+                        <th>{{ '{:,.2f}'.format(total_future_buy_value) if total_future_buy_value % 1 else '{:,.0f}'.format(total_future_buy_value) }}</th>
+                        <th>{{ '{:,.2f}'.format(total_future_sell_value) if total_future_sell_value % 1 else '{:,.0f}'.format(total_future_sell_value) }}</th>
+
+                        <th>{{ '{:,.2f}'.format(total_option_buy_value) if total_option_buy_value % 1 else '{:,.0f}'.format(total_option_buy_value) }}</th>
+                        <th>{{ '{:,.2f}'.format(total_option_sell_value) if total_option_sell_value % 1 else '{:,.0f}'.format(total_option_sell_value) }}</th>
+                        <th>{{ '{:,.2f}'.format(total_buy_quantity) if total_buy_quantity % 1 else '{:,.0f}'.format(total_buy_quantity) }}</th>
+                        <th>{{ '{:,.2f}'.format(total_sell_quantity) if total_sell_quantity % 1 else '{:,.0f}'.format(total_sell_quantity) }}</th>
+                        <th>-</th>
+                    </tr>
+                    <tr style="position: sticky;  background: white; z-index: 1;">
+                        <th>Date</th>
+                        <th>EQ Buy Value</th>
+                        <th>EQ Sell Value</th>
+                        <th>Future Buy Value</th>
+                        <th>Future Sell Value</th>
+                        <th>Option Buy Value</th>
+                        <th>Option Sell Value</th>
+                        <th>Buy Quantity</th>
+                        <th>Sell Quantity</th>
+                        <th >Trading ID</th> 
+
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in turnover_data %}
+                    <tr>
+                        <td>{{ row['Date'] }}</td>
+                        <td>{{ '{:,.2f}'.format(row['EQ Buy Value']) if row['EQ Buy Value'] % 1 else '{:,.0f}'.format(row['EQ Buy Value']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['EQ Sell Value']) if row['EQ Sell Value'] % 1 else '{:,.0f}'.format(row['EQ Sell Value']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['Future Buy Value']) if row['Future Buy Value'] % 1 else '{:,.0f}'.format(row['Future Buy Value']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['Future Sell Value']) if row['Future Sell Value'] % 1 else '{:,.0f}'.format(row['Future Sell Value']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['Option Buy Value']) if row['Option Buy Value'] % 1 else '{:,.0f}'.format(row['Option Buy Value']) }}</td>                
+                        <td>{{ '{:,.2f}'.format(row['Option Sell Value']) if row['Option Sell Value'] % 1 else '{:,.0f}'.format(row['Option Sell Value']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['Buy Quantity']) if row['Buy Quantity'] % 1 else '{:,.0f}'.format(row['Buy Quantity']) }}</td>
+                        <td>{{ '{:,.2f}'.format(row['Sell Quantity']) if row['Sell Quantity'] % 1 else '{:,.0f}'.format(row['Sell Quantity']) }}</td>
+                        <td>{{ row['Trading ID'] }}</td> 
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="button-container">
+            <a href="{{ url_for('data', group_name=group_name) }}">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

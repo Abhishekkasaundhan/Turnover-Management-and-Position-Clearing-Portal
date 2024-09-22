@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload, Download, and Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .button-container a {
+            text-decoration: none;
+            color: #fff;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: 10px;
+            transition: background-color 0.3s, transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container a:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body style="background-color: #e4d9d9;">
+    <div class="container mt-5">
+        <h1>Files Uploader for Group: {{ group_name }}</h1>
+
+        <!-- File Upload Form -->
+        <form id="uploadForm" method="POST" action="/upload" enctype="multipart/form-data">
+            <div class="form-group" style="width: 300px;">
+                <label for="datepicker">Select Date:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="datepicker" name="datepicker" placeholder="YYYY-MM-DD" required>
+                   
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="files">Upload Files:</label>
+                <input type="file" class="form-control-file" id="files" name="files[]" multiple>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <div id="error-message" style="color: red; margin-top: 10px;"></div>
+        </form>
+
+        {% if selected_date %}
+            <h3>Selected Date: {{ selected_date }}</h3>
+            {% if message %}
+                <p>{{ message }}</p>
+            {% endif %}
+        {% endif %}
+
+        <!-- File Management Section -->
+        <h2>Manage Files</h2>
+        <form method="post">
+            <input type="hidden" name="action" value="list_files">
+            <div class="form-group" style="width: 300px;">
+                <label for="manage_datepicker">Select Date to View Files:</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="manage_datepicker" name="manage_datepicker" placeholder="YYYY-MM-DD" required>
+                    
+                </div>
+            </div>
+            <button type="submit" class="btn btn-info" style="background-color: #007bff;">View Files</button>
+        </form>
+
+        {% if files %}
+        <h3>Available Files:</h3>
+        <form method="post">
+            <input type="hidden" name="action" value="delete_files">
+            <input type="hidden" name="delete_datepicker" value="{{ selected_date }}">
+            <ul class="list-group">
+                
+                {% for file in files %}
+                
+                <li class="list-group-item d-flex justify-content-between align-items-center" style="width: 350px;">
+                    <div>
+                        <input type="checkbox" name="files_to_delete" value="{{ file }}">
+                        <label>Delete</label>
+                    </div>
+                    <a href="{{ url_for('download_file', filename=file, date=selected_date) }}">{{ file }}</a>
+                 
+                </li>
+                {% endfor %}
+            </ul>
+            <button type="submit" class="btn btn-danger mt-3">Delete Selected Files</button>
+        </form>
+        {% endif %}
+
+        <!-- Back to Home and Logout Buttons -->
+        <div class="button-container" style="margin-top: 50px;">
+            <a href="{{ url_for('data', group_name=current_user.id) }}">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            var today = new Date().toISOString().split('T')[0];
+            $('#datepicker, #manage_datepicker').datepicker({
+                format: 'yyyy-mm-dd',
+                autoclose: true,
+                todayHighlight: true
+            }).datepicker('setDate', today);
+
+            $('#uploadForm').on('submit', function(e) {
+                var files = $('#files')[0].files;
+                if (files.length === 0) {
+                    e.preventDefault();
+                    $('#error-message').text('Please select at least one file to upload.');
+                } else {
+                    $('#error-message').text('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
